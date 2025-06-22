@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Top Ten Hit Factory</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #5a3e8d; }
+        label { display: block; margin-top: 10px; margin-bottom: 5px; }
+        input[type="text"], input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            background-color: #5a3e8d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #432c6f;
+        }
+        .info { font-size: 0.9em; color: #666; margin-top:15px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>UK Top Ten Hit Factory</h1>
+        <p>Enter a seed (number) or leave blank for a random one, then hit Generate!</p>
+
+        <form action="{{ url_for('generate_hit') }}" method="POST">
+            <label for="seed">Seed (optional):</label>
+            <input type="text" id="seed" name="seed" placeholder="e.g., 12345">
+
+            <input type="submit" value="Generate My Hit!">
+        </form>
+        <p class="info">This tool uses insights from the "Deconstructing UK Top 10 Hits" report to generate novel MIDI music compositions.</p>
+    </div>
+</body>
+</html>
