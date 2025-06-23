@@ -3,46 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UK Top Ten Hit Factory</title>
+    <title>UK Top Ten Hit Factory - Advanced Controls</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #5a3e8d; }
-        label { display: block; margin-top: 10px; margin-bottom: 5px; }
-        input[type="text"], input[type="number"] {
-            width: calc(100% - 22px);
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f0f2f5; color: #333; }
+        .container { background-color: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); max-width: 700px; margin: auto; }
+        h1 { color: #1a73e8; text-align: center; margin-bottom: 25px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 8px; font-weight: 600; color: #555; }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
             padding: 10px;
-            margin-bottom: 20px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            box-sizing: border-box; /* Important for padding and width */
+            font-size: 1rem;
         }
-        input[type="submit"] {
-            background-color: #5a3e8d;
+        input[type="range"] { width: 100%; }
+        .slider-value { font-size: 0.9em; color: #666; text-align: right; }
+        input[type="submit"], .surprise-button {
+            background-color: #1a73e8;
             color: white;
-            padding: 10px 15px;
+            padding: 12px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
         }
-        input[type="submit"]:hover {
-            background-color: #432c6f;
+        input[type="submit"]:hover, .surprise-button:hover {
+            background-color: #125abc;
         }
-        .info { font-size: 0.9em; color: #666; margin-top:15px;}
+        .surprise-button { background-color: #34a853; margin-top: 0;}
+        .full-width { grid-column: 1 / -1; } /* For elements spanning both columns */
+        .info { font-size: 0.9em; color: #666; margin-top: 20px; text-align: center; }
+        hr { border: 0; height: 1px; background-color: #e0e0e0; margin: 25px 0; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>UK Top Ten Hit Factory</h1>
-        <p>Enter a seed (number) or leave blank for a random one, then hit Generate!</p>
 
-        <form action="{{ url_for('generate_hit') }}" method="POST">
-            <label for="seed">Seed (optional):</label>
-            <input type="text" id="seed" name="seed" placeholder="e.g., 12345">
+        <form action="{{ url_for('generate_hit') }}" method="POST" id="generationForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="seed">Master Seed (optional):</label>
+                    <input type="text" id="seed" name="seed" placeholder="e.g., 12345 or leave blank">
+                </div>
 
-            <input type="submit" value="Generate My Hit!">
+                <div class="form-group">
+                    <label for="primary_genre">Song Style / Primary Genre:</label>
+                    <select id="primary_genre" name="primary_genre">
+                        <option value="ModernPop" selected>Modern Pop</option>
+                        <option value="PopRock">Pop/Rock</option>
+                        <option value="EDMPulse">EDM Pulse</option>
+                        <option value="HipHopGroove">Hip-Hop Groove</option>
+                        <option value="Ballad">Ballad/Singer-Songwriter</option>
+                        <option value="RetroSynthwave">Retro Synthwave</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mood">Mood / Emotional Feel:</label>
+                    <select id="mood" name="mood">
+                        <option value="UpliftingEnergetic" selected>Uplifting / Energetic</option>
+                        <option value="HappyBright">Happy / Bright</option>
+                        <option value="NeutralReflective">Neutral / Reflective</option>
+                        <option value="MelancholySentimental">Melancholy / Sentimental</option>
+                        <option value="DarkIntense">Dark / Intense</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="energy_level">Energy Level (1=Chill, 5=High): <span id="energy_level_value">3</span></label>
+                    <input type="range" id="energy_level" name="energy_level" min="1" max="5" value="3" oninput="document.getElementById('energy_level_value').textContent = this.value;">
+                </div>
+
+                <div class="form-group">
+                    <label for="tempo_preference">Tempo Preference:</label>
+                    <select id="tempo_preference" name="tempo_preference">
+                        <option value="Any">Any (Style-driven)</option>
+                        <option value="VerySlow">Very Slow (60-80 BPM)</option>
+                        <option value="Slow">Slow (80-100 BPM)</option>
+                        <option value="Medium" selected>Medium (100-120 BPM)</option>
+                        <option value="Fast">Fast (120-140 BPM)</option>
+                        <option value="VeryFast">Very Fast (140-160+ BPM)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="song_length">Song Length:</label>
+                    <select id="song_length" name="song_length">
+                        <option value="Short">Short (~2:00-2:30)</option>
+                        <option value="Radio" selected>Radio (~2:30-3:15)</option>
+                        <option value="Standard">Standard (~3:15-4:00)</option>
+                        <option value="Extended">Extended (~4:00-4:45)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="structural_complexity">Structural Complexity:</label>
+                    <select id="structural_complexity" name="structural_complexity">
+                        <option value="Simple">Simple (e.g., V-C-V-C-O)</option>
+                        <option value="Standard" selected>Standard Pop (Pre-Chorus, Bridge)</option>
+                        <option value="Developed">More Developed (e.g., longer sections)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="melodic_complexity">Melodic Complexity (1=Simple, 5=Varied): <span id="melodic_complexity_value">3</span></label>
+                    <input type="range" id="melodic_complexity" name="melodic_complexity" min="1" max="5" value="3" oninput="document.getElementById('melodic_complexity_value').textContent = this.value;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="harmonic_richness">Harmonic Richness:</label>
+                    <select id="harmonic_richness" name="harmonic_richness">
+                        <option value="TriadsOnly">Triads Only</option>
+                        <option value="Some7ths" selected>Some 7ths</option>
+                        <option value="Mostly7ths">Mostly 7ths</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="instrumentation_focus">Instrumentation Focus:</label>
+                    <select id="instrumentation_focus" name="instrumentation_focus">
+                        <option value="Balanced" selected>Balanced Mix</option>
+                        <option value="PianoLed">Piano-Led</option>
+                        <option value="SynthHeavy">Synth-Heavy</option>
+                        <option value="GuitarFocused">Guitar-Focused (Acoustic/Electric)</option>
+                        <option value="Minimalist">Minimalist</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <input type="submit" value="Generate My Hit!">
+            </div>
         </form>
+        <div class="form-group full-width">
+             <button type="button" class="surprise-button" onclick="surpriseMe()">✨ Surprise Me & Generate! ✨</button>
+        </div>
+
         <p class="info">This tool uses insights from the "Deconstructing UK Top 10 Hits" report to generate novel MIDI music compositions.</p>
     </div>
+
+    <script>
+        function surpriseMe() {
+            // Randomize controls
+            const selects = document.querySelectorAll('#generationForm select');
+            selects.forEach(select => {
+                if (select.id !== 'tempo_preference' || Math.random() < 0.7) { // Don't always randomize tempo if style drives it
+                     select.selectedIndex = Math.floor(Math.random() * select.options.length);
+                }
+            });
+
+            const ranges = document.querySelectorAll('#generationForm input[type="range"]');
+            ranges.forEach(range => {
+                const min = parseInt(range.min);
+                const max = parseInt(range.max);
+                range.value = Math.floor(Math.random() * (max - min + 1)) + min;
+                // Update display value
+                const displayId = range.id + '_value';
+                const displaySpan = document.getElementById(displayId);
+                if (displaySpan) {
+                    displaySpan.textContent = range.value;
+                }
+            });
+            
+            // Clear the seed to make it fully random
+            document.getElementById('seed').value = '';
+
+            // Submit the form
+            document.getElementById('generationForm').submit();
+        }
+    </script>
 </body>
 </html>
