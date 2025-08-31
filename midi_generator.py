@@ -2,8 +2,13 @@
 import random
 from midiutil import MIDIFile
 
+# Import the new melody generator modules
+from melody_generators import standard_generator 
+from melody_generators import contour_generator 
+# from melody_generators import markov_generator
+
 # --- Version ---
-GENERATOR_VERSION = "0.7.2" # Phase 6 - Indentation Bug Fix
+GENERATOR_VERSION = "0.8.6" # Phase 7 - Drum Break Indentation Fix
 
 class UKHitFactory:
     def __init__(self, user_params):
@@ -16,45 +21,44 @@ class UKHitFactory:
         self.midi_obj = MIDIFile(numTracks=self.num_instrument_tracks, removeDuplicates=True, deinterleave=False)
         self.track_map = {"Drums": 0, "Bass": 1, "Chords": 2, "Melody": 3, "Pad": 4}
 
-        self.params = self._initialize_and_process_parameters()
+        self.params = {} 
+        self._initialize_and_process_parameters()
 
     def _initialize_and_process_parameters(self):
-        params = {}
-        params['seed'] = self.seed
-
+        self.params['seed'] = self.seed
         primary_genre = self.user_params.get('primary_genre', 'ModernPop')
         mood = self.user_params.get('mood', 'UpliftingEnergetic')
-        params['primary_genre'] = primary_genre
-        params['mood'] = mood
+        self.params['primary_genre'] = primary_genre
+        self.params['mood'] = mood
 
         tempo_preference = self.user_params.get('tempo_preference', 'Medium')
-        if tempo_preference == "VerySlow": params['bpm'] = random.randint(60, 80)
-        elif tempo_preference == "Slow": params['bpm'] = random.randint(80, 100)
-        elif tempo_preference == "Medium": params['bpm'] = random.randint(100, 120)
-        elif tempo_preference == "Fast": params['bpm'] = random.randint(120, 140)
-        elif tempo_preference == "VeryFast": params['bpm'] = random.randint(140, 165)
+        if tempo_preference == "VerySlow": self.params['bpm'] = random.randint(60, 80)
+        elif tempo_preference == "Slow": self.params['bpm'] = random.randint(80, 100)
+        elif tempo_preference == "Medium": self.params['bpm'] = random.randint(100, 120)
+        elif tempo_preference == "Fast": self.params['bpm'] = random.randint(120, 140)
+        elif tempo_preference == "VeryFast": self.params['bpm'] = random.randint(140, 165)
         else: 
-            if primary_genre == "Ballad": params['bpm'] = random.randint(65, 90)
-            elif primary_genre == "HipHopGroove": params['bpm'] = random.randint(80, 105)
-            elif primary_genre == "EDMPulse": params['bpm'] = random.randint(120, 135)
-            elif primary_genre == "RetroSynthwave": params['bpm'] = random.randint(90, 120)
-            else: params['bpm'] = random.randint(100, 130)
+            if primary_genre == "Ballad": self.params['bpm'] = random.randint(65, 90)
+            elif primary_genre == "HipHopGroove": self.params['bpm'] = random.randint(80, 105)
+            elif primary_genre == "EDMPulse": self.params['bpm'] = random.randint(120, 135)
+            elif primary_genre == "RetroSynthwave": self.params['bpm'] = random.randint(90, 120)
+            else: self.params['bpm'] = random.randint(100, 130)
         if tempo_preference == "Any":
             energy_level = self.user_params.get('energy_level', 3)
-            if energy_level == 1: params['bpm'] = max(60, params['bpm'] - 20)
-            elif energy_level == 2: params['bpm'] = max(60, params['bpm'] - 10)
-            elif energy_level == 4: params['bpm'] = min(180, params['bpm'] + 10)
-            elif energy_level == 5: params['bpm'] = min(180, params['bpm'] + 20)
+            if energy_level == 1: self.params['bpm'] = max(60, self.params['bpm'] - 20)
+            elif energy_level == 2: self.params['bpm'] = max(60, self.params['bpm'] - 10)
+            elif energy_level == 4: self.params['bpm'] = min(180, self.params['bpm'] + 10)
+            elif energy_level == 5: self.params['bpm'] = min(180, self.params['bpm'] + 20)
         for track_num in range(self.midi_obj.numTracks):
-            self.midi_obj.addTempo(track_num, 0, params['bpm'])
-        print(f"Selected BPM: {params['bpm']}")
+            self.midi_obj.addTempo(track_num, 0, self.params['bpm'])
+        print(f"Selected BPM: {self.params['bpm']}")
 
         song_length_pref = self.user_params.get('song_length', 'Radio')
-        if song_length_pref == "Short": params['target_duration_seconds'] = random.randint(120, 150)
-        elif song_length_pref == "Radio": params['target_duration_seconds'] = random.randint(150, 195)
-        elif song_length_pref == "Standard": params['target_duration_seconds'] = random.randint(195, 240)
-        elif song_length_pref == "Extended": params['target_duration_seconds'] = random.randint(240, 285)
-        else: params['target_duration_seconds'] = random.randint(150, 195)
+        if song_length_pref == "Short": self.params['target_duration_seconds'] = random.randint(120, 150)
+        elif song_length_pref == "Radio": self.params['target_duration_seconds'] = random.randint(150, 195)
+        elif song_length_pref == "Standard": self.params['target_duration_seconds'] = random.randint(195, 240)
+        elif song_length_pref == "Extended": self.params['target_duration_seconds'] = random.randint(240, 285)
+        else: self.params['target_duration_seconds'] = random.randint(150, 195)
 
         keys_info_major = [(0, "C Major"), (2, "D Major"), (5, "F Major"), (7, "G Major")]
         keys_info_minor = [(9, "A Minor"), (4, "E Minor"), (2, "D Minor"), (7, "G Minor")]
@@ -66,12 +70,12 @@ class UKHitFactory:
         elif mood == "UpliftingEnergetic": is_major_key = random.random() < 0.85
         if is_major_key: chosen_key_root, chosen_key_name = random.choice(keys_info_major)
         else: chosen_key_root, chosen_key_name = random.choice(keys_info_minor)
-        params['key_root_original'] = chosen_key_root
-        params['is_major_original'] = is_major_key
-        params['key_name_original'] = chosen_key_name
-        params['active_key_root'] = params['key_root_original']
-        params['active_is_major'] = params['is_major_original']
-        print(f"Original Key: {params['key_name_original']}")
+        self.params['key_root_original'] = chosen_key_root
+        self.params['is_major_original'] = is_major_key
+        self.params['key_name_original'] = chosen_key_name
+        self.params['active_key_root'] = self.params['key_root_original']
+        self.params['active_is_major'] = self.params['is_major_original']
+        print(f"Original Key: {self.params['key_name_original']}")
 
         structural_complexity_pref = self.user_params.get('structural_complexity', 'Standard')
         if structural_complexity_pref == "Simple":
@@ -80,7 +84,7 @@ class UKHitFactory:
             form_templates = [["Intro", "Verse", "PreChorus", "Chorus", "Verse", "PreChorus", "Chorus", "Bridge", "InstrumentalHook", "Chorus", "Outro"], ["Intro", "Verse", "PreChorus", "Chorus", "Verse", "PreChorus", "Chorus", "Bridge", "Chorus", "Chorus", "Outro"]]
         else: # Standard
             form_templates = [["Intro", "Verse", "PreChorus", "Chorus", "Verse", "PreChorus", "Chorus", "Bridge", "Chorus", "Outro"], ["Intro", "Verse", "Chorus", "Verse", "Chorus", "InstrumentalHook", "Chorus", "Outro"]]
-        params['song_form'] = random.choice(form_templates)
+        self.params['song_form'] = random.choice(form_templates)
 
         schemas = {"I-V-vi-IV": ([0, 7, 9, 5], "Classic Pop/Rock"), "vi-IV-I-V": ([9, 5, 0, 7], "Singer/Songwriter/Ballad"), "I-vi-IV-V": ([0, 9, 5, 7], "Doo-wop/Oldies"), "IV-V-vi-I": ([5, 7, 9, 0], "Modern Pop/Hopscotch")}
         schema_choice = "I-V-vi-IV"
@@ -89,56 +93,63 @@ class UKHitFactory:
         elif primary_genre == "Ballad": schema_choice = "vi-IV-I-V"
         elif primary_genre == "RetroSynthwave" and random.random() < 0.5: schema_choice = random.choice(["I-V-vi-IV", "vi-IV-I-V"])
         else: schema_choice = random.choice(list(schemas.keys()))
-        params['harmonic_schema_name'] = schema_choice
-        params['harmonic_schema_progression_degrees'], params['harmonic_schema_feel'] = schemas[params['harmonic_schema_name']]
-        print(f"Harmonic Schema: {params['harmonic_schema_name']}")
+        self.params['harmonic_schema_name'] = schema_choice
+        self.params['harmonic_schema_progression_degrees'], self.params['harmonic_schema_feel'] = schemas[self.params['harmonic_schema_name']]
+        print(f"Harmonic Schema: {self.params['harmonic_schema_name']}")
 
         harmonic_richness_pref = self.user_params.get('harmonic_richness', 'Some7ths')
-        if harmonic_richness_pref == "TriadsOnly": params['use_7th_chords_probability'] = 0.0
-        elif harmonic_richness_pref == "Some7ths": params['use_7th_chords_probability'] = 0.4
-        elif harmonic_richness_pref == "Mostly7ths": params['use_7th_chords_probability'] = 0.8
-        else: params['use_7th_chords_probability'] = 0.4
+        if harmonic_richness_pref == "TriadsOnly": self.params['use_7th_chords_probability'] = 0.0
+        elif harmonic_richness_pref == "Some7ths": self.params['use_7th_chords_probability'] = 0.4
+        elif harmonic_richness_pref == "Mostly7ths": self.params['use_7th_chords_probability'] = 0.8
+        else: self.params['use_7th_chords_probability'] = 0.4
 
-        if primary_genre == "HipHopGroove": params['rhythm_personality'] = "HipHopGroove"
-        elif primary_genre == "EDMPulse": params['rhythm_personality'] = "EDMPulse"
-        elif primary_genre == "RetroSynthwave": params['rhythm_personality'] = "EDMPulse"
-        elif primary_genre == "Ballad": params['rhythm_personality'] = "PopRock"
-        else: params['rhythm_personality'] = "PopRock"
-        print(f"Rhythm Personality: {params['rhythm_personality']}")
+        if primary_genre == "HipHopGroove": self.params['rhythm_personality'] = "HipHopGroove"
+        elif primary_genre == "EDMPulse": self.params['rhythm_personality'] = "EDMPulse"
+        elif primary_genre == "RetroSynthwave": self.params['rhythm_personality'] = "EDMPulse"
+        elif primary_genre == "Ballad": self.params['rhythm_personality'] = "PopRock"
+        else: self.params['rhythm_personality'] = "PopRock"
+        print(f"Rhythm Personality: {self.params['rhythm_personality']}")
         
         instrumentation_focus = self.user_params.get('instrumentation_focus', 'Balanced')
-        params['instrumentation_focus'] = instrumentation_focus # CORRECTED: Ensure this is assigned
+        self.params['instrumentation_focus'] = instrumentation_focus
 
-        params['instruments'] = { "Drums": None }
+        self.params['instruments'] = { "Drums": None }
         bass_instr = random.choice([33, 34, 38]); chords_instr = random.choice([0, 4, 88]); melody_instr = random.choice([80, 25, 52]); pad_instr = random.choice([89, 90, 92])
-        if params['rhythm_personality'] in ["HipHopGroove", "EDMPulse", "RetroSynthwave"]: bass_instr = random.choice([38, 39])
+        if self.params['rhythm_personality'] in ["HipHopGroove", "EDMPulse", "RetroSynthwave"]: bass_instr = random.choice([38, 39])
         if primary_genre == "Ballad": chords_instr = 0; melody_instr = random.choice([25, 40, 52]); pad_instr = random.choice([48, 89])
         elif primary_genre == "RetroSynthwave": chords_instr = random.choice([80,81,88,89]); melody_instr = random.choice([80,81,84]); pad_instr = random.choice([88,89,90,91,92])
         if instrumentation_focus == "PianoLed": chords_instr = 0
         elif instrumentation_focus == "SynthHeavy": chords_instr = random.choice([80,81,88,89]); melody_instr = random.choice([80,81,84]); pad_instr = random.choice([88,89,90,91,92])
         elif instrumentation_focus == "GuitarFocused": chords_instr = random.choice([24, 25]); melody_instr = random.choice([26, 27, 28, 29, 30])
-        params['instruments']['Bass'] = bass_instr; params['instruments']['Chords'] = chords_instr; params['instruments']['Melody'] = melody_instr; params['instruments']['Pad'] = pad_instr
+        self.params['instruments']['Bass'] = bass_instr; self.params['instruments']['Chords'] = chords_instr; self.params['instruments']['Melody'] = melody_instr; self.params['instruments']['Pad'] = pad_instr
         if instrumentation_focus == "Minimalist": 
-            params['instruments']['Pad'] = None
-            if random.random() < 0.5: params['instruments']['Chords'] = None # Indentation corrected here
+            self.params['instruments']['Pad'] = None
+            if random.random() < 0.5: self.params['instruments']['Chords'] = None
         
         energy_level = self.user_params.get('energy_level', 3)
-        if energy_level == 1: params['overall_dynamic_level'] = random.randint(55, 65)
-        elif energy_level == 2: params['overall_dynamic_level'] = random.randint(65, 75)
-        elif energy_level == 3: params['overall_dynamic_level'] = random.randint(75, 85)
-        elif energy_level == 4: params['overall_dynamic_level'] = random.randint(85, 95)
-        elif energy_level == 5: params['overall_dynamic_level'] = random.randint(95, 105)
-        else: params['overall_dynamic_level'] = random.randint(75, 85)
+        if energy_level == 1: self.params['overall_dynamic_level'] = random.randint(55, 65)
+        elif energy_level == 2: self.params['overall_dynamic_level'] = random.randint(65, 75)
+        elif energy_level == 3: self.params['overall_dynamic_level'] = random.randint(75, 85)
+        elif energy_level == 4: self.params['overall_dynamic_level'] = random.randint(85, 95)
+        elif energy_level == 5: self.params['overall_dynamic_level'] = random.randint(95, 105)
+        else: self.params['overall_dynamic_level'] = random.randint(75, 85)
 
         melodic_complexity_ui = self.user_params.get('melodic_complexity', 3)
-        if melodic_complexity_ui <= 2: params['melodic_complexity_level'] = "Simple"
-        elif melodic_complexity_ui >= 4: params['melodic_complexity_level'] = "Complex"
-        else: params['melodic_complexity_level'] = "Moderate"
-        print(f"Internal Melodic Complexity: {params['melodic_complexity_level']}")
-        params['hook_on_downbeat_strong'] = True
-        return params
+        if melodic_complexity_ui <= 2: self.params['melodic_complexity_level'] = "Simple"
+        elif melodic_complexity_ui >= 4: self.params['melodic_complexity_level'] = "Complex"
+        else: self.params['melodic_complexity_level'] = "Moderate"
+        print(f"Internal Melodic Complexity: {self.params['melodic_complexity_level']}")
+
+        self.params['melody_generation_method'] = self.user_params.get('melody_generation_style', 'Standard')
+        print(f"Melody Generation Method: {self.params['melody_generation_method']}")
+
+        self.params['hook_on_downbeat_strong'] = True
+        
+        self.params['_get_scale_notes_func'] = self._get_scale_notes
+        self.params['_build_chord_voicings_func'] = self._build_chord_voicings
 
     def _get_section_profile(self, section_type, base_dynamic_level):
+        # ... (This method remains the same as v0.8.5)
         profile = {
             'velocity_base': base_dynamic_level, 'rhythmic_density_modifier': 1.0,
             'instrument_layers': ["Chords"], 'fills_enabled': False,
@@ -197,7 +208,6 @@ class UKHitFactory:
             profile['rhythmic_density_modifier'] *= 0.5
             profile['instrument_layers'] = random.choice([["Chords_Fade", "Pad_Fade"], ["Melody_Sparse_Fade"], ["Chords_Fade"]])
             if instrumentation_focus == "Minimalist":  profile['instrument_layers'] = [random.choice(["Melody_Sparse_Fade", "Chords_Fade"])]
-        
         if instrumentation_focus == "Minimalist":
             has_harmonic_or_melodic = any(s.startswith("Chords") or s.startswith("Melody") for s in profile['instrument_layers'])
             if not has_harmonic_or_melodic:
@@ -215,7 +225,7 @@ class UKHitFactory:
         else: intervals = major_intervals if is_major else minor_intervals
         return sorted([(root_note + i) % 12 for i in intervals])
 
-    def _get_chord_notes_from_roman(self, roman_numeral_degree, key_root, is_major, use_7th_from_prob=True): # Changed param name
+    def _get_chord_notes_from_roman(self, roman_numeral_degree, key_root, is_major):
         scale_intervals = [0, 2, 4, 5, 7, 9, 11] if is_major else [0, 2, 3, 5, 7, 8, 10]
         chord_root_offset = scale_intervals[roman_numeral_degree % 7]
         actual_chord_root_note = key_root + chord_root_offset; triad_type = "major"
@@ -227,7 +237,7 @@ class UKHitFactory:
             elif roman_numeral_degree in [2, 5, 6]: triad_type = "major"
             elif roman_numeral_degree == 1: triad_type = "diminished"
         final_chord_type = triad_type
-        if use_7th_from_prob and self.params.get('use_7th_chords_probability', 0.0) > random.random():
+        if self.params.get('use_7th_chords_probability', 0.0) > random.random():
             if is_major:
                 if roman_numeral_degree in [0, 3]: final_chord_type = "maj7"
                 elif roman_numeral_degree in [1, 2, 5]: final_chord_type = "min7"
@@ -323,14 +333,17 @@ class UKHitFactory:
             bar_start = start_time_beats + bar_idx * 4
             current_bar_overall_velocity = base_velocity
             if is_build:
-                progression_in_prechorus = bar_idx / num_bars
+                progression_in_prechorus = bar_idx / num_bars if num_bars > 0 else 0
                 current_bar_overall_velocity = int(base_velocity + (15 * progression_in_prechorus))
                 current_bar_overall_velocity = min(115, current_bar_overall_velocity)
+            
             if allow_rhythmic_break and bar_idx == num_bars // 2 and num_bars > 2:
-                if random.random() < 0.5:
+                if random.random() < 0.5: 
                     print(f"    Drum break in {section_type} at bar {bar_idx+1}")
-                    if random.random() < 0.7: self.midi_obj.addNote(track_num, 9, crash, bar_start, 2, current_bar_overall_velocity -10)
-                    continue
+                    if random.random() < 0.7: 
+                        self.midi_obj.addNote(track_num, 9, crash, bar_start, 2, current_bar_overall_velocity -10)
+                    continue # Correctly indented to skip the rest of the bar
+
             kick_vel = min(127, current_bar_overall_velocity + 5)
             snare_vel = min(127, current_bar_overall_velocity + 10)
             hat_vel = max(30, current_bar_overall_velocity - (25 if self.params['primary_genre'] == "Ballad" else 20) )
@@ -358,24 +371,23 @@ class UKHitFactory:
                 self.midi_obj.addNote(track_num, 9, snare, bar_start + 3, 1, snare_vel)
                 hat_subdivision = 0.5
                 if self.params['primary_genre'] == "Ballad": hat_subdivision = 1.0 
-                elif is_build and (bar_idx >= num_bars / 2): hat_subdivision = 0.25
+                elif is_build and (bar_idx >= num_bars / 2 if num_bars > 0 else False): hat_subdivision = 0.25
                 elif is_peak or section_profile['rhythmic_density_modifier'] > 1.0 : hat_subdivision = 0.25
-                for i in range(int(4 / hat_subdivision)):
-                    if self.params['primary_genre'] == "Ballad" and random.random() < 0.6 and section_type == "Verse": continue
-                    hat_note = closed_hh if self.params['primary_genre'] != "Ballad" else random.choice([ride, closed_hh])
-                    if is_build and i % (int(1/hat_subdivision) * 2) == (int(1/hat_subdivision) * 2 -1) and random.random() < 0.3: hat_note = open_hh
-                    self.midi_obj.addNote(track_num, 9, hat_note, bar_start + i * hat_subdivision, hat_subdivision, hat_vel)
+                if hat_subdivision > 0:
+                    for i in range(int(4 / hat_subdivision)):
+                        if self.params['primary_genre'] == "Ballad" and random.random() < 0.6 and section_type == "Verse": continue
+                        hat_note = closed_hh if self.params['primary_genre'] != "Ballad" else random.choice([ride, closed_hh])
+                        if is_build and i % (int(1/hat_subdivision) * 2) == (int(1/hat_subdivision) * 2 -1) and random.random() < 0.3: hat_note = open_hh
+                        self.midi_obj.addNote(track_num, 9, hat_note, bar_start + i * hat_subdivision, hat_subdivision, hat_vel)
             if is_peak and bar_idx % 4 == 0 : self.midi_obj.addNote(track_num, 9, crash, bar_start, 2, min(127, current_bar_overall_velocity + 15))
             if fills_enabled and bar_idx == num_bars - 1 and random.random() < 0.85:
                 fill_options = ["standard_snare_roll", "tom_roll_simple", "kick_and_cymbal_transition", "syncopated_snare_pop"]
                 if rhythm_personality == "HipHopGroove": fill_options.append("hiphop_stutter_snare")
                 elif rhythm_personality == "EDMPulse": fill_options.append("edm_noise_sweep")
                 elif self.params['primary_genre'] == "Ballad": fill_options = ["sparse_tom_accent", "kick_and_cymbal_transition"]
-                fill_pattern_name = random.choice(fill_options)
-                fill_notes = self._get_drum_fill_pattern(fill_pattern_name, rhythm_personality)
+                fill_pattern_name = random.choice(fill_options); fill_notes = self._get_drum_fill_pattern(fill_pattern_name, rhythm_personality)
                 fill_bar_end_time = bar_start + 4; fill_vel = min(127, current_bar_overall_velocity + 10)
-                for note_val, offset_from_end, duration in fill_notes:
-                    self.midi_obj.addNote(track_num, 9, note_val, fill_bar_end_time - offset_from_end, duration, fill_vel)
+                for note_val, offset_from_end, duration in fill_notes: self.midi_obj.addNote(track_num, 9, note_val, fill_bar_end_time - offset_from_end, duration, fill_vel)
                 if fill_notes: self.midi_obj.addNote(track_num, 9, crash, fill_bar_end_time - 0.01, 0.5, fill_vel + 5)
             elif fills_enabled and (bar_idx + 1) % 4 == 0 and bar_idx < num_bars -1 and random.random() < (0.15 if self.params['primary_genre'] == "Ballad" else 0.35) :
                 fill_options = ["sparse_tom_accent", "syncopated_snare_pop"]
@@ -383,8 +395,7 @@ class UKHitFactory:
                 fill_notes = self._get_drum_fill_pattern(random.choice(fill_options), rhythm_personality)
                 fill_bar_end_time = bar_start + 4; fill_vel = current_bar_overall_velocity
                 for note_val, offset_from_end, duration in fill_notes:
-                    if offset_from_end <= 2.0 :
-                        self.midi_obj.addNote(track_num, 9, note_val, fill_bar_end_time - offset_from_end, duration, fill_vel)
+                    if offset_from_end <= 2.0 : self.midi_obj.addNote(track_num, 9, note_val, fill_bar_end_time - offset_from_end, duration, fill_vel)
 
     def _add_bass_line(self, track_num, chord_prog, start_time_beats, section_type, section_profile):
         base_velocity = section_profile['velocity_base']
@@ -392,37 +403,30 @@ class UKHitFactory:
         key_root, is_major = self.params['active_key_root'], self.params['active_is_major']
         scale_notes_pc = self._get_scale_notes(key_root, is_major, "diatonic")
         rhythm_personality = self.params['rhythm_personality']; primary_genre = self.params['primary_genre']
-        current_beat = start_time_beats; total_section_duration_beats = sum(d for _,_,d in chord_prog)
-
+        current_beat = start_time_beats; total_section_duration_beats = sum(d for _,_,d in chord_prog) if chord_prog else 1
         for i, (root_midi, chord_type, duration_beats) in enumerate(chord_prog):
             current_note_overall_velocity = base_velocity
-            if is_build:
-                progression_in_build = (current_beat - start_time_beats) / total_section_duration_beats if total_section_duration_beats > 0 else 0
-                current_note_overall_velocity = int(base_velocity + (15 * progression_in_build))
-                current_note_overall_velocity = min(110, current_note_overall_velocity)
+            if is_build: progression_in_build = (current_beat - start_time_beats) / total_section_duration_beats if total_section_duration_beats > 0 else 0; current_note_overall_velocity = int(base_velocity + (15 * progression_in_build)); current_note_overall_velocity = min(110, current_note_overall_velocity)
             bass_octave_root = root_midi - 12
             if bass_octave_root < 24: bass_octave_root += 12
             chord_tones_for_bass = self._build_chord_voicings(root_midi, chord_type, octave_center=2, num_notes_pref=3)
             if is_peak and section_type == "Chorus" and primary_genre not in ["Ballad", "RetroSynthwave"]:
-                step_duration = 0.5; num_steps = int(duration_beats / step_duration)
+                step_duration = 0.5; num_steps = int(duration_beats / step_duration) if step_duration > 0 else 1
                 for step_idx in range(num_steps):
                     note_to_play = bass_octave_root
-                    if step_idx % 2 == 1 and len(chord_tones_for_bass) > 1 and random.random() < 0.4:
-                        note_to_play = chord_tones_for_bass[1] if chord_tones_for_bass[1] < 60 else bass_octave_root
-                    note_velocity = min(127, current_note_overall_velocity + (5 if step_idx % (int(1/step_duration)*2) == 0 else 0))
+                    if step_idx % 2 == 1 and len(chord_tones_for_bass) > 1 and random.random() < 0.4: note_to_play = chord_tones_for_bass[1] if chord_tones_for_bass[1] < 60 else bass_octave_root
+                    note_velocity = min(127, current_note_overall_velocity + (5 if step_idx % (int(1/step_duration)*2 if step_duration > 0 else 1) == 0 else 0))
                     self.midi_obj.addNote(track_num, track_num, note_to_play, current_beat + step_idx * step_duration, step_duration - 0.02, note_velocity)
-            elif primary_genre == "Ballad":
-                self.midi_obj.addNote(track_num, track_num, bass_octave_root, current_beat, duration_beats - 0.1, current_note_overall_velocity)
+            elif primary_genre == "Ballad": self.midi_obj.addNote(track_num, track_num, bass_octave_root, current_beat, duration_beats - 0.1, current_note_overall_velocity)
             else:
                 step_duration = 0.5
                 if rhythm_personality == "EDMPulse" and is_peak: step_duration = 0.25
                 elif rhythm_personality == "HipHopGroove": step_duration = random.choice([0.5, 1.0])
-                num_steps = int(duration_beats / step_duration)
+                num_steps = int(duration_beats / step_duration) if step_duration > 0 else 1
                 if num_steps == 0: num_steps = 1
                 last_bass_note_val = None
                 for step_idx in range(num_steps):
-                    beat_in_chord = current_beat + step_idx * step_duration
-                    actual_step_duration = step_duration
+                    beat_in_chord = current_beat + step_idx * step_duration; actual_step_duration = step_duration
                     if beat_in_chord + actual_step_duration > current_beat + duration_beats: actual_step_duration = (current_beat + duration_beats) - beat_in_chord
                     if actual_step_duration <= 0.05: continue
                     note_to_play = bass_octave_root; note_velocity = current_note_overall_velocity
@@ -454,17 +458,12 @@ class UKHitFactory:
         sustain_factor = 0.98 if is_pad_role else 0.95
         if is_pad_role and section_type == "Outro": sustain_factor = 2.5
         current_beat = start_time_beats; total_duration_of_section_beats = num_bars_in_section * 4
-
         for i, (root_midi, chord_type, duration_beats) in enumerate(chord_prog):
             current_note_overall_velocity = base_velocity
             progress_within_section = (current_beat - start_time_beats) / total_duration_of_section_beats if total_duration_of_section_beats > 0 else 0
-            if is_build:
-                current_note_overall_velocity = int(base_velocity + (20 * progress_within_section))
-                current_note_overall_velocity = min(100 if is_pad_role else 110, current_note_overall_velocity)
-            elif section_type == "Outro":
-                current_note_overall_velocity = int(base_velocity * (1 - progress_within_section * 0.8))
+            if is_build: current_note_overall_velocity = int(base_velocity + (20 * progress_within_section)); current_note_overall_velocity = min(100 if is_pad_role else 110, current_note_overall_velocity)
+            elif section_type == "Outro": current_note_overall_velocity = int(base_velocity * (1 - progress_within_section * 0.8))
             num_notes_for_voicing = 3
-            # Corrected to use self.params for 7th chord probability
             if self.params.get('use_7th_chords_probability', 0.0) > random.random() and ("7" in chord_type or "b5" in chord_type): num_notes_for_voicing = random.choice([3,4])
             if is_pad_role: num_notes_for_voicing = random.choice([2,3,4])
             chord_pitches = self._build_chord_voicings(root_midi, chord_type, octave_center=octave_center, num_notes_pref=num_notes_for_voicing)
@@ -473,182 +472,30 @@ class UKHitFactory:
             actual_sustain = duration_beats * sustain_factor
             if is_pad_role and random.random() < 0.5: actual_sustain = duration_beats + 0.1
             if is_build and not is_pad_role and random.random() < 0.6:
-                num_pulses = int(duration_beats / 0.5)
+                num_pulses = int(duration_beats / 0.5) if duration_beats > 0 else 0
                 for pulse in range(num_pulses):
                     for pitch in chord_pitches: self.midi_obj.addNote(track_num, track_num, pitch, current_beat + pulse * 0.5, 0.5 * sustain_factor, note_velocity_for_this_chord)
             else:
                 for pitch in chord_pitches: self.midi_obj.addNote(track_num, track_num, pitch, current_beat, actual_sustain, note_velocity_for_this_chord)
             current_beat += duration_beats
-
-    def _create_melodic_motif(self, num_beats_motif, home_chord_root, home_chord_type, key_root, is_major, complexity_level_str, melody_style='standard'): # Renamed complexity
-        motif_notes = []; attempts = 0
-        scale_choice = "major_pentatonic" if is_major else "minor_pentatonic"
-        if melody_style == 'bridge_distinct': scale_choice = "diatonic"
-        scale_notes_pc = self._get_scale_notes(key_root, is_major, scale_choice)
-        chord_tones_pc = self._build_chord_voicings(home_chord_root, home_chord_type, octave_center=0)
-        chord_tones_pc = [n % 12 for n in chord_tones_pc]
-        if not chord_tones_pc: chord_tones_pc = [key_root % 12]
-        base_octave = 5
-        if melody_style == 'bridge_distinct' and random.random() < 0.3: base_octave = random.choice([4,5,6])
-        current_motif_beat = 0
-        start_pitch_pc = random.choice(chord_tones_pc)
-        if melody_style == 'bridge_distinct': start_pitch_pc = random.choice(chord_tones_pc[len(chord_tones_pc)//2:] if len(chord_tones_pc)>1 else chord_tones_pc)
-        start_pitch = (base_octave * 12) + start_pitch_pc
-        start_duration = random.choice([0.5, 1.0, 0.75])
-        if melody_style == 'bridge_distinct': start_duration = random.choice([1.0, 1.5, 2.0, 0.75])
-        motif_notes.append((start_pitch, 0, min(start_duration, num_beats_motif)))
-        current_motif_beat += min(start_duration, num_beats_motif); last_pitch_val = start_pitch
-        num_motif_notes = random.randint(2, 4)
-        if melody_style == 'bridge_distinct': num_motif_notes = random.randint(1,3)
-        for i in range(1, num_motif_notes):
-            if current_motif_beat >= num_beats_motif: break
-            next_pitch_pc = last_pitch_val % 12; attempts = 0
-            if random.random() < (0.4 if melody_style == 'bridge_distinct' else 0.7):
-                step_options = [-1, -2, 1, 2]
-                if melody_style == 'bridge_distinct': step_options.extend([-3,3,-4,4, -5, 5, -7, 7])
-                step = random.choice(step_options)
-                next_pitch_pc = (next_pitch_pc + step + 12) % 12
-                while next_pitch_pc not in scale_notes_pc and attempts < 5: next_pitch_pc = (next_pitch_pc + random.choice([-1,1]) +12) % 12; attempts+=1
-            else: next_pitch_pc = random.choice(scale_notes_pc if random.random() <0.5 else chord_tones_pc)
-            next_pitch = (base_octave * 12) + next_pitch_pc
-            max_leap_from_start = (6 if complexity_level_str == "Simple" else (9 if complexity_level_str == "Moderate" else 12))
-            if melody_style == 'bridge_distinct': max_leap_from_start = 14
-            if abs(next_pitch - start_pitch) > max_leap_from_start :
-                diff_octaves = (next_pitch // 12) - (start_pitch // 12)
-                if abs(diff_octaves) > 0 : next_pitch -= diff_octaves * 12 * (1 if random.random() < 0.7 else 0)
-                if abs(next_pitch - start_pitch) > max_leap_from_start: next_pitch = last_pitch_val + random.choice([-1,1,2,-2,3,-3])
-            duration = random.choice([0.25, 0.5, 0.5, 0.75, 1.0])
-            if melody_style == 'bridge_distinct': duration = random.choice([0.75, 1.0, 1.5, 2.0])
-            if current_motif_beat + duration > num_beats_motif: duration = num_beats_motif - current_motif_beat
-            if duration < 0.125: continue
-            motif_notes.append((next_pitch, current_motif_beat, duration))
-            current_motif_beat += duration; last_pitch_val = next_pitch
-        return motif_notes
-
-    def _apply_motif_variation(self, motif, variation_type="rhythmic_simple"):
-        varied_motif = []
-        if not motif: return []
-        if variation_type == "rhythmic_simple":
-            current_beat_offset = 0
-            for p, mb, md in motif:
-                new_dur = md
-                if random.random() < 0.3:
-                    if md == 0.5: new_dur = random.choice([0.25, 0.75])
-                    elif md == 1.0: new_dur = random.choice([0.5, 0.75, 1.25])
-                    elif md == 0.25: new_dur = 0.5
-                new_dur = max(0.125, new_dur)
-                varied_motif.append((p, current_beat_offset, new_dur))
-                current_beat_offset +=new_dur
-            return varied_motif
-        elif variation_type == "pitch_ornament":
-            current_beat_offset = 0
-            if len(motif) > 1:
-                idx_to_ornament = random.randrange(len(motif))
-                for i, (p, mb, md) in enumerate(motif):
-                    if i == idx_to_ornament and md > 0.25:
-                        neighbor_tone = p + random.choice([-1,-2,1,2])
-                        varied_motif.append((p, current_beat_offset, md/2))
-                        current_beat_offset += md/2
-                        varied_motif.append((neighbor_tone, current_beat_offset, md/2))
-                        current_beat_offset += md/2
-                    else:
-                        varied_motif.append((p,current_beat_offset,md))
-                        current_beat_offset += md
-                return varied_motif
-        return list(motif)
-
-    def _generate_melodic_phrase(self, num_beats, current_chord_root, current_chord_type, key_root, is_major, complexity_level_str, section_profile, is_hook_on_downbeat_section, motif_to_develop=None, is_motif_repetition=False):
-        phrase_notes = []
-        melody_style = section_profile.get('melody_style', 'standard')
-        scale_choice = "major_pentatonic" if is_major else "minor_pentatonic"
-        if melody_style == 'bridge_distinct' or random.random() < 0.3: scale_choice = "diatonic"
-        scale_notes_pc = self._get_scale_notes(key_root, is_major, scale_choice)
-        chord_tones_pc = self._build_chord_voicings(current_chord_root, current_chord_type, octave_center=0)
-        chord_tones_pc = [n % 12 for n in chord_tones_pc]
-        if not chord_tones_pc: chord_tones_pc = [key_root % 12]
-        base_octave = 5; current_mel_beat = 0; last_pitch = None; num_notes_in_phrase = 0
-        current_motif_instance = motif_to_develop
-        if motif_to_develop and is_motif_repetition and random.random() < 0.6:
-            variation_choice = random.choice(["rhythmic_simple", "pitch_ornament", "none"])
-            if variation_choice != "none": current_motif_instance = self._apply_motif_variation(motif_to_develop, variation_choice)
-        if current_motif_instance and random.random() < (0.8 if is_hook_on_downbeat_section else (0.3 if melody_style != 'bridge_distinct' else 0.1) ):
-            motif_total_duration = sum(md for _,_,md in current_motif_instance)
-            if current_mel_beat + motif_total_duration <= num_beats + 0.01:
-                for p, mb_in_motif, md in current_motif_instance:
-                    actual_start_beat = current_mel_beat + mb_in_motif
-                    if actual_start_beat + md > num_beats + 0.01 : continue
-                    varied_pitch = p
-                    is_strong_motif_beat = (mb_in_motif == 0.0 or mb_in_motif % 1.0 == 0.0)
-                    if is_strong_motif_beat and ( (varied_pitch % 12) not in chord_tones_pc ):
-                        if chord_tones_pc : varied_pitch = (varied_pitch // 12)*12 + random.choice(chord_tones_pc)
-                    phrase_notes.append({'pitch': varied_pitch, 'time': actual_start_beat, 'duration': md})
-                    last_pitch = varied_pitch
-                current_mel_beat += motif_total_duration
-                num_notes_in_phrase += len(current_motif_instance)
-        rhythmic_density_for_walk = section_profile['rhythmic_density_modifier']
-        if melody_style == 'bridge_distinct': rhythmic_density_for_walk *= 0.7
-        while current_mel_beat < num_beats - 0.125 and num_notes_in_phrase < (num_beats * 2.0 * rhythmic_density_for_walk):
-            note_duration_options = [0.5, 1.0, 0.25]
-            if melody_style == 'bridge_distinct': note_duration_options = [1.0, 1.5, 0.75, 2.0]
-            if complexity_level_str == "Complex": note_duration_options.extend([0.125, 0.33])
-            note_duration = random.choice(note_duration_options)
-            if current_mel_beat + note_duration > num_beats: note_duration = num_beats - current_mel_beat
-            if note_duration < 0.125: break
-            is_strong_beat = ((current_mel_beat - (current_mel_beat % 4)) % 2.0 == 0.0)
-            possible_next_pitches_pc = []
-            if is_hook_on_downbeat_section and self.params['hook_on_downbeat_strong'] and is_strong_beat: possible_next_pitches_pc = chord_tones_pc
-            elif random.random() < (0.5 if melody_style == 'bridge_distinct' else 0.7): possible_next_pitches_pc.extend(chord_tones_pc)
-            if not possible_next_pitches_pc: possible_next_pitches_pc.extend(scale_notes_pc)
-            if not possible_next_pitches_pc: possible_next_pitches_pc = [(key_root + i) % 12 for i in [0,2,4,5,7,9,11]]
-            chosen_pitch_pc = random.choice(possible_next_pitches_pc)
-            next_pitch = (base_octave * 12) + chosen_pitch_pc
-            if last_pitch is not None:
-                max_interval = 5 if complexity_level_str == "Simple" else (9 if melody_style == 'bridge_distinct' else 7)
-                if complexity_level_str == "Complex": max_interval = 10
-                interval = abs(next_pitch - last_pitch); attempts = 0;
-                while interval > max_interval and attempts < 3:
-                    chosen_pitch_pc_alt = random.choice(possible_next_pitches_pc)
-                    next_pitch_alt = (base_octave * 12) + chosen_pitch_pc_alt
-                    if abs(next_pitch_alt - last_pitch) < interval: next_pitch = next_pitch_alt
-                    interval = abs(next_pitch - last_pitch); attempts += 1
-            phrase_notes.append({'pitch': next_pitch, 'time': current_mel_beat, 'duration': note_duration})
-            last_pitch = next_pitch; current_mel_beat += note_duration; num_notes_in_phrase +=1
-        return phrase_notes
-
+            
     def _add_melody_line(self, track_num, chord_prog, start_time_beats, section_type, section_profile):
-        key_root, is_major = self.params['active_key_root'], self.params['active_is_major']
-        complexity_str = self.params['melodic_complexity_level']
-        is_hook_section = (section_type == "Chorus" or section_type == "InstrumentalHook")
-        base_melody_velocity = section_profile['velocity_base'] + random.randint(3, 8)
-        if section_profile['is_peak_section']: base_melody_velocity = min(120, base_melody_velocity + 10)
-        current_abs_beat = start_time_beats; total_section_duration_beats = sum(d for _,_,d in chord_prog)
-        hook_motif_key = f"{section_type}_motif"
-        if is_hook_section and not self.params.get(hook_motif_key) and section_profile.get('melody_style') != 'bridge_distinct':
-            motif_chord_root, motif_chord_type, _ = chord_prog[0]
-            self.params[hook_motif_key] = self._create_melodic_motif(random.choice([1.0, 2.0]), motif_chord_root, motif_chord_type, key_root, is_major, complexity_str, section_profile.get('melody_style', 'standard'))
-        motif_for_current_phrase = None
-        if is_hook_section and self.params.get(hook_motif_key) and section_profile.get('melody_style') != 'bridge_distinct':
-            motif_for_current_phrase = self.params[hook_motif_key]
+        method = self.params.get('melody_generation_method', 'Standard')
+        print(f"    Using melody generation method: {method} for {section_type}")
 
-        for i, (chord_root_midi, chord_type, chord_duration_beats) in enumerate(chord_prog):
-            progress_within_section = (current_abs_beat - start_time_beats) / total_section_duration_beats if total_section_duration_beats > 0 else 0
-            current_note_overall_velocity = base_melody_velocity
-            if section_profile['build_tension']:
-                current_note_overall_velocity = int(base_melody_velocity + (20 * progress_within_section))
-                current_note_overall_velocity = min(115, current_note_overall_velocity)
-            elif section_type == "Outro": current_note_overall_velocity = int(base_melody_velocity * (1 - progress_within_section * 0.9))
-            is_motif_repetition_in_hook = is_hook_section and (i > 0 or (i==0 and self.params.get(f"{hook_motif_key}_used_once", False)))
-            melodic_phrase_notes_data = self._generate_melodic_phrase(chord_duration_beats, chord_root_midi, chord_type, key_root, is_major, complexity_str, section_profile, is_hook_section, motif_to_develop=(motif_for_current_phrase if section_profile.get('melody_style') != 'bridge_distinct' else None), is_motif_repetition=is_motif_repetition_in_hook)
-            if is_hook_section and i == 0 and section_profile.get('melody_style') != 'bridge_distinct': self.params[f"{hook_motif_key}_used_once"] = True
-            for note_data in melodic_phrase_notes_data:
-                pitch, time_in_phrase, duration = note_data['pitch'], note_data['time'], note_data['duration']
-                final_vel = current_note_overall_velocity
-                is_strong_beat_in_phrase = (time_in_phrase == 0.0 or time_in_phrase % 1.0 == 0.0)
-                if is_hook_section and self.params['hook_on_downbeat_strong'] and is_strong_beat_in_phrase: final_vel = min(127, current_note_overall_velocity + 10)
-                elif section_profile['build_tension'] and pitch > (5*12 + 7): final_vel = min(127, current_note_overall_velocity + 5)
-                absolute_note_time = current_abs_beat + time_in_phrase
-                self.midi_obj.addNote(track_num, track_num, pitch, absolute_note_time, duration * 0.98, final_vel)
-            current_abs_beat += chord_duration_beats
+        factory_params_for_melody = self.params.copy()
+        factory_params_for_melody['_get_scale_notes_instance_method'] = self._get_scale_notes
+        factory_params_for_melody['_build_chord_voicings_instance_method'] = self._build_chord_voicings
+        # This provides access to UKHitFactory's instance methods for theory if needed by external generators.
+        # External generators can call: factory_params_for_melody['_get_scale_notes_instance_method'](root, major, style)
+
+        if method == "MarkovChain":
+            print(f"    Markov Chain melody for {section_type} (Not Fully Implemented Yet, using Standard)")
+            standard_generator.generate(self.midi_obj, track_num, chord_prog, start_time_beats, section_type, section_profile, factory_params_for_melody)
+        elif method == "ContourDriven":
+            contour_generator.generate(self.midi_obj, track_num, chord_prog, start_time_beats, section_type, section_profile, factory_params_for_melody)
+        else: # Standard (Rule-Based & Motif)
+            standard_generator.generate(self.midi_obj, track_num, chord_prog, start_time_beats, section_type, section_profile, factory_params_for_melody)
 
     def _generate_section_midi(self, section_type, current_time_beats, section_bars):
         print(f"  Generating MIDI for {section_type} ({section_bars} bars)")
@@ -680,7 +527,7 @@ class UKHitFactory:
         print(f"Composing '{self.song_title}'...")
         self.params['active_key_root'] = self.params['key_root_original']
         self.params['active_is_major'] = self.params['is_major_original']
-        for key in list(self.params.keys()):
+        for key in list(self.params.keys()): 
             if key.endswith("_motif") or key.endswith("_used_once"): del self.params[key]
         for track_name, track_num in self.track_map.items():
             self.midi_obj.addTrackName(track_num, 0, track_name)
@@ -689,7 +536,7 @@ class UKHitFactory:
         current_total_time_beats = 0
         max_beats = (self.params['target_duration_seconds'] / 60) * self.params['bpm']
         section_bar_lengths = {}
-        structural_complexity_pref = self.user_params.get('structural_complexity', 'Standard') # Use user_params here
+        structural_complexity_pref = self.user_params.get('structural_complexity', 'Standard')
         for section_name_in_form in set(self.params['song_form']):
             if section_name_in_form in ["Intro", "Outro"]: section_bar_lengths[section_name_in_form] = random.choice([2,4] if structural_complexity_pref == "Simple" else [4, 8])
             elif section_name_in_form == "Bridge" or section_name_in_form == "InstrumentalHook": section_bar_lengths[section_name_in_form] = random.choice([4,8])
@@ -713,9 +560,16 @@ class UKHitFactory:
 if __name__ == "__main__":
     test_user_params = {
         'seed': random.randint(0,1000000), 
-        'primary_genre': 'ModernPop', 'mood': 'UpliftingEnergetic', 'energy_level': 4,
-        'tempo_preference': 'Medium', 'song_length': 'Radio', 'structural_complexity': 'Standard',
-        'melodic_complexity': 3, 'harmonic_richness': 'Some7ths', 'instrumentation_focus': 'Balanced'
+        'primary_genre': 'ModernPop', 
+        'mood': 'UpliftingEnergetic', 
+        'energy_level': 4,
+        'tempo_preference': 'Medium', 
+        'song_length': 'Radio', 
+        'structural_complexity': 'Standard',
+        'melodic_complexity': 3, 
+        'harmonic_richness': 'Some7ths', 
+        'instrumentation_focus': 'Balanced',
+        'melody_generation_style': 'ContourDriven'
     }
     print(f"Using test_user_params for local test: {test_user_params}")
     hit_generator = UKHitFactory(user_params=test_user_params)
